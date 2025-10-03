@@ -1,0 +1,225 @@
+<header class="bg-white shadow-sm">
+  <nav aria-label="Main navigation" class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+    <!-- Logo -->
+    <div class="flex lg:flex-1">
+      <a href="{{ shop.url }}" class="-m-1.5 p-1.5" aria-label="{{ shop.name }} - Home">
+        {% if settings.logo != blank %}
+          <img
+            src="{{ settings.logo | image_url: width: 200 }}"
+            alt="{{ shop.name }}"
+            class="h-8 w-auto"
+            width="200"
+            height="32"
+            loading="eager"
+          >
+        {% else %}
+          <span class="text-xl font-bold text-gray-900">{{ shop.name }}</span>
+        {% endif %}
+      </a>
+    </div>
+
+    <!-- Mobile menu button -->
+    <div class="flex lg:hidden">
+      <button
+        type="button"
+        class="w-10 h-10 inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-gray-500"
+        aria-controls="mobile-menu"
+        aria-expanded="false"
+        onclick="toggleMobileMenu()"
+      >
+        <span class="sr-only">Open main menu</span>
+        {% render 'icon-hamburger' %}
+      </button>
+    </div>
+
+    <!-- Desktop navigation -->
+    <div class="hidden lg:flex lg:gap-x-8">
+      {% for link in linklists['main-menu'].links %}
+        {% if link.links != blank %}
+          <div class="relative group">
+            <button
+              class="flex items-center gap-x-1 text-sm font-semibold text-gray-900 hover:text-gray-700 focus:outline-none"
+              aria-expanded="false"
+              onclick="toggleDropdown(this)"
+            >
+              {{ link.title }}
+              {% render 'icon-chevron-down' %}
+            </button>
+            <div class="absolute left-1/2 z-10 mt-5 flex w-screen max-w-md -translate-x-1/2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div class="w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+                <div class="p-4">
+                  {% for childlink in link.links %}
+                    <a
+                      href="{{ childlink.url }}"
+                      class="group relative flex items-center gap-x-6 rounded-lg p-4 text-sm hover:bg-gray-50"
+                    >
+                      <div class="flex-auto">
+                        <span class="font-semibold text-gray-900">{{ childlink.title }}</span>
+                      </div>
+                    </a>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <a href="{{ link.url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700">{{ link.title }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- Desktop actions -->
+    <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
+      {% if shop.customer_accounts_enabled %}
+        {% if customer %}
+          <a href="{{ routes.account_url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700">Account</a>
+          <a href="{{ routes.account_logout_url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700"
+            >Log out</a
+          >
+        {% else %}
+          <a href="{{ routes.account_login_url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700"
+            >Log in</a
+          >
+          <a href="{{ routes.account_register_url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700"
+            >Sign up</a
+          >
+        {% endif %}
+      {% endif %}
+
+      <!-- Cart -->
+      <a
+        href="{{ routes.cart_url }}"
+        class="relative flex items-center text-sm font-semibold text-gray-900 hover:text-gray-700"
+      >
+        {% render 'icon-cart' %}
+        {% if cart.item_count > 0 %}
+          <span class="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+            {{- cart.item_count -}}
+          </span>
+        {% endif %}
+      </a>
+    </div>
+  </nav>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="hidden lg:hidden">
+    <div class="space-y-1 px-2 pb-3 pt-2">
+      {% for link in linklists['main-menu'].links %}
+        {% if link.links != blank %}
+          <div>
+            <button
+              class="flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              onclick="toggleMobileDropdown(this)"
+            >
+              {{ link.title }}
+              {% render 'icon-chevron-down-mobile' %}
+            </button>
+            <div class="hidden pl-4 space-y-1">
+              {% for childlink in link.links %}
+                <a
+                  href="{{ childlink.url }}"
+                  class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  {{- childlink.title -}}
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          <a
+            href="{{ link.url }}"
+            class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+          >
+            {{- link.title -}}
+          </a>
+        {% endif %}
+      {% endfor %}
+
+      <div class="border-t border-gray-200 pt-4">
+        {% if shop.customer_accounts_enabled %}
+          {% if customer %}
+            <a
+              href="{{ routes.account_url }}"
+              class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              >Account</a
+            >
+            <a
+              href="{{ routes.account_logout_url }}"
+              class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              >Log out</a
+            >
+          {% else %}
+            <a
+              href="{{ routes.account_login_url }}"
+              class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              >Log in</a
+            >
+            <a
+              href="{{ routes.account_register_url }}"
+              class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              >Sign up</a
+            >
+          {% endif %}
+        {% endif %}
+        <a
+          href="{{ routes.cart_url }}"
+          class="flex items-center rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+        >
+          Cart
+          {% if cart.item_count > 0 %}
+            <span class="ml-2 h-5 w-5 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
+              {{- cart.item_count -}}
+            </span>
+          {% endif %}
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const isHidden = menu.classList.contains('hidden');
+
+    if (isHidden) {
+      menu.classList.remove('hidden');
+    } else {
+      menu.classList.add('hidden');
+    }
+  }
+
+  function toggleDropdown(button) {
+    const dropdown = button.nextElementSibling;
+    const isVisible = dropdown.classList.contains('opacity-100');
+
+    if (isVisible) {
+      dropdown.classList.remove('opacity-100', 'visible');
+      dropdown.classList.add('opacity-0', 'invisible');
+    } else {
+      dropdown.classList.remove('opacity-0', 'invisible');
+      dropdown.classList.add('opacity-100', 'visible');
+    }
+  }
+
+  function toggleMobileDropdown(button) {
+    const dropdown = button.nextElementSibling;
+    const isHidden = dropdown.classList.contains('hidden');
+
+    if (isHidden) {
+      dropdown.classList.remove('hidden');
+    } else {
+      dropdown.classList.add('hidden');
+    }
+  }
+
+  // Close mobile menu when clicking outside
+  document.addEventListener('click', function (event) {
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuButton = document.querySelector('[onclick="toggleMobileMenu()"]');
+
+    if (!mobileMenu.contains(event.target) && !mobileMenuButton.contains(event.target)) {
+      mobileMenu.classList.add('hidden');
+    }
+  });
+</script>
