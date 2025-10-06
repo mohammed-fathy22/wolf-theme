@@ -1,19 +1,37 @@
-<header class="bg-white shadow-sm">
-  <nav aria-label="Main navigation" class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8">
+<!-- Favicon -->
+{% if section.settings.favicon != blank %}
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ section.settings.favicon | image_url: width: 32 }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ section.settings.favicon | image_url: width: 32 }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ section.settings.favicon | image_url: width: 16 }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ section.settings.favicon | image_url: width: 180 }}">
+{% endif %}
+
+<header
+  class="{% if section.settings.enable_sticky_header %}sticky top-0 z-50{% endif %} {% if section.settings.enable_transparent_header and template == 'index' %}absolute w-full bg-transparent{% else %}bg-white{% endif %} shadow-{{ section.settings.header_shadow }}"
+  style="
+    background-color: {{ section.settings.header_background }};
+    color: {{ section.settings.header_text_color }};
+    height: {{ section.settings.header_height }}px;
+    {% if section.settings.custom_css != blank %}{{ section.settings.custom_css }}{% endif %}
+  "
+>
+  <nav aria-label="Main navigation" class="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8 h-full">
     <!-- Logo -->
     <div class="flex lg:flex-1">
       <a href="{{ shop.url }}" class="-m-1.5 p-1.5" aria-label="{{ shop.name }} - Home">
-        {% if settings.logo != blank %}
+        {% if section.settings.logo != blank %}
           <img
-            src="{{ settings.logo | image_url: width: 200 }}"
-            alt="{{ shop.name }}"
+            src="{{ section.settings.logo | image_url: width: section.settings.logo_width }}"
+            alt="{{ section.settings.logo_alt_text | default: shop.name }}"
             class="h-8 w-auto"
-            width="200"
-            height="32"
+            width="{{ section.settings.logo_width }}"
+            height="{{ section.settings.logo_width | divided_by: 6.25 }}"
             loading="eager"
           >
         {% else %}
-          <span class="text-xl font-bold text-gray-900">{{ shop.name }}</span>
+          <span class="text-xl font-bold" style="color: {{ section.settings.header_text_color }}">
+            {{- section.settings.shop_name | default: shop.name -}}
+          </span>
         {% endif %}
       </a>
     </div>
@@ -34,11 +52,14 @@
 
     <!-- Desktop navigation -->
     <div class="hidden lg:flex lg:gap-x-8">
-      {% for link in linklists['main-menu'].links %}
+      {% for link in linklists[section.settings.main_menu].links %}
         {% if link.links != blank %}
           <div class="relative group">
             <button
-              class="flex items-center gap-x-1 text-sm font-semibold text-gray-900 hover:text-gray-700 focus:outline-none"
+              class="flex items-center gap-x-1 text-sm font-semibold focus:outline-none transition-colors duration-200"
+              style="color: {{ section.settings.header_text_color }}"
+              onmouseover="this.style.color='{{ section.settings.header_hover_color }}'"
+              onmouseout="this.style.color='{{ section.settings.header_text_color }}'"
               aria-expanded="false"
               onclick="toggleDropdown(this)"
             >
@@ -51,7 +72,7 @@
                   {% for childlink in link.links %}
                     <a
                       href="{{ childlink.url }}"
-                      class="group relative flex items-center gap-x-6 rounded-lg p-4 text-sm hover:bg-gray-50"
+                      class="group relative flex items-center gap-x-6 rounded-lg p-4 text-sm hover:bg-gray-50 transition-colors duration-200"
                     >
                       <div class="flex-auto">
                         <span class="font-semibold text-gray-900">{{ childlink.title }}</span>
@@ -63,52 +84,116 @@
             </div>
           </div>
         {% else %}
-          <a href="{{ link.url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700">{{ link.title }}</a>
+          <a
+            href="{{ link.url }}"
+            class="text-sm font-semibold transition-colors duration-200"
+            style="color: {{ section.settings.header_text_color }}"
+            onmouseover="this.style.color='{{ section.settings.header_hover_color }}'"
+            onmouseout="this.style.color='{{ section.settings.header_text_color }}'"
+          >
+            {{- link.title -}}
+          </a>
         {% endif %}
       {% endfor %}
     </div>
 
     <!-- Desktop actions -->
     <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:gap-x-4">
-      {% if shop.customer_accounts_enabled %}
+      {% if section.settings.show_account_links and shop.customer_accounts_enabled %}
         {% if customer %}
-          <a href="{{ routes.account_url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700">Account</a>
-          <a href="{{ routes.account_logout_url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700"
+          <a
+            href="{{ routes.account_url }}"
+            class="text-sm font-semibold transition-colors duration-200"
+            style="color: {{ section.settings.header_text_color }}"
+            onmouseover="this.style.color='{{ section.settings.header_hover_color }}'"
+            onmouseout="this.style.color='{{ section.settings.header_text_color }}'"
+            >Account</a
+          >
+          <a
+            href="{{ routes.account_logout_url }}"
+            class="text-sm font-semibold transition-colors duration-200"
+            style="color: {{ section.settings.header_text_color }}"
+            onmouseover="this.style.color='{{ section.settings.header_hover_color }}'"
+            onmouseout="this.style.color='{{ section.settings.header_text_color }}'"
             >Log out</a
           >
         {% else %}
-          <a href="{{ routes.account_login_url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700"
+          <a
+            href="{{ routes.account_login_url }}"
+            class="text-sm font-semibold transition-colors duration-200"
+            style="color: {{ section.settings.header_text_color }}"
+            onmouseover="this.style.color='{{ section.settings.header_hover_color }}'"
+            onmouseout="this.style.color='{{ section.settings.header_text_color }}'"
             >Log in</a
           >
-          <a href="{{ routes.account_register_url }}" class="text-sm font-semibold text-gray-900 hover:text-gray-700"
+          <a
+            href="{{ routes.account_register_url }}"
+            class="text-sm font-semibold transition-colors duration-200"
+            style="color: {{ section.settings.header_text_color }}"
+            onmouseover="this.style.color='{{ section.settings.header_hover_color }}'"
+            onmouseout="this.style.color='{{ section.settings.header_text_color }}'"
             >Sign up</a
           >
         {% endif %}
       {% endif %}
 
+      <!-- Search Icon -->
+      {% if section.settings.show_search %}
+        <a
+          href="{{ routes.search_url }}"
+          class="relative flex items-center text-sm font-semibold transition-colors duration-200"
+          style="color: {{ section.settings.header_text_color }}"
+          onmouseover="this.style.color='{{ section.settings.header_hover_color }}'"
+          onmouseout="this.style.color='{{ section.settings.header_text_color }}'"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </a>
+      {% endif %}
+
       <!-- Cart -->
-      <a
-        href="{{ routes.cart_url }}"
-        class="relative flex items-center text-sm font-semibold text-gray-900 hover:text-gray-700"
-      >
-        {% render 'icon-cart' %}
-        {% if cart.item_count > 0 %}
-          <span class="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-            {{- cart.item_count -}}
-          </span>
-        {% endif %}
-      </a>
+      {% if section.settings.show_cart %}
+        <a
+          href="{{ routes.cart_url }}"
+          class="relative flex items-center text-sm font-semibold transition-colors duration-200"
+          style="color: {{ section.settings.header_text_color }}"
+          onmouseover="this.style.color='{{ section.settings.header_hover_color }}'"
+          onmouseout="this.style.color='{{ section.settings.header_text_color }}'"
+        >
+          {% render 'icon-cart' %}
+          {% if section.settings.show_cart_count and cart.item_count > 0 %}
+            <span
+              class="absolute -top-2 -right-2 h-5 w-5 rounded-full text-xs text-white flex items-center justify-center"
+              style="background-color: {{ section.settings.cart_badge_color }}"
+            >
+              {{- cart.item_count -}}
+            </span>
+          {% endif %}
+        </a>
+      {% endif %}
     </div>
   </nav>
 
   <!-- Mobile menu -->
-  <div id="mobile-menu" class="hidden lg:hidden">
+  <div
+    id="mobile-menu"
+    class="hidden lg:hidden {% if section.settings.mobile_menu_sticky %}sticky top-0 z-40{% endif %}"
+    style="background-color: {{ section.settings.header_background }};"
+  >
     <div class="space-y-1 px-2 pb-3 pt-2">
-      {% for link in linklists['main-menu'].links %}
+      {% if section.settings.mobile_menu_title != blank %}
+        <div class="px-3 py-2 text-sm font-medium text-gray-500 border-b border-gray-200">
+          {{ section.settings.mobile_menu_title }}
+        </div>
+      {% endif %}
+
+      {% for link in linklists[section.settings.main_menu].links %}
         {% if link.links != blank %}
           <div>
             <button
-              class="flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              class="flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-semibold transition-colors duration-200 hover:bg-gray-50"
+              style="color: {{ section.settings.header_text_color }}"
               onclick="toggleMobileDropdown(this)"
             >
               {{ link.title }}
@@ -118,7 +203,8 @@
               {% for childlink in link.links %}
                 <a
                   href="{{ childlink.url }}"
-                  class="block rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  class="block rounded-md px-3 py-2 text-sm font-medium transition-colors duration-200 hover:bg-gray-50"
+                  style="color: {{ section.settings.header_text_color }}"
                 >
                   {{- childlink.title -}}
                 </a>
@@ -128,7 +214,8 @@
         {% else %}
           <a
             href="{{ link.url }}"
-            class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+            class="block rounded-md px-3 py-2 text-base font-semibold transition-colors duration-200 hover:bg-gray-50"
+            style="color: {{ section.settings.header_text_color }}"
           >
             {{- link.title -}}
           </a>
@@ -136,42 +223,67 @@
       {% endfor %}
 
       <div class="border-t border-gray-200 pt-4">
-        {% if shop.customer_accounts_enabled %}
+        {% if section.settings.show_account_links and shop.customer_accounts_enabled %}
           {% if customer %}
             <a
               href="{{ routes.account_url }}"
-              class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              class="block rounded-md px-3 py-2 text-base font-semibold transition-colors duration-200 hover:bg-gray-50"
+              style="color: {{ section.settings.header_text_color }}"
               >Account</a
             >
             <a
               href="{{ routes.account_logout_url }}"
-              class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              class="block rounded-md px-3 py-2 text-base font-semibold transition-colors duration-200 hover:bg-gray-50"
+              style="color: {{ section.settings.header_text_color }}"
               >Log out</a
             >
           {% else %}
             <a
               href="{{ routes.account_login_url }}"
-              class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              class="block rounded-md px-3 py-2 text-base font-semibold transition-colors duration-200 hover:bg-gray-50"
+              style="color: {{ section.settings.header_text_color }}"
               >Log in</a
             >
             <a
               href="{{ routes.account_register_url }}"
-              class="block rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
+              class="block rounded-md px-3 py-2 text-base font-semibold transition-colors duration-200 hover:bg-gray-50"
+              style="color: {{ section.settings.header_text_color }}"
               >Sign up</a
             >
           {% endif %}
         {% endif %}
-        <a
-          href="{{ routes.cart_url }}"
-          class="flex items-center rounded-md px-3 py-2 text-base font-semibold text-gray-900 hover:bg-gray-50"
-        >
-          Cart
-          {% if cart.item_count > 0 %}
-            <span class="ml-2 h-5 w-5 rounded-full bg-red-500 text-xs text-white flex items-center justify-center">
-              {{- cart.item_count -}}
-            </span>
-          {% endif %}
-        </a>
+
+        {% if section.settings.show_search %}
+          <a
+            href="{{ routes.search_url }}"
+            class="flex items-center rounded-md px-3 py-2 text-base font-semibold transition-colors duration-200 hover:bg-gray-50"
+            style="color: {{ section.settings.header_text_color }}"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            Search
+          </a>
+        {% endif %}
+
+        {% if section.settings.show_cart %}
+          <a
+            href="{{ routes.cart_url }}"
+            class="flex items-center rounded-md px-3 py-2 text-base font-semibold transition-colors duration-200 hover:bg-gray-50"
+            style="color: {{ section.settings.header_text_color }}"
+          >
+            {% render 'icon-cart' %}
+            <span class="ml-2">{{ section.settings.cart_text | default: 'Cart' }}</span>
+            {% if section.settings.show_cart_count and cart.item_count > 0 %}
+              <span
+                class="ml-2 h-5 w-5 rounded-full text-xs text-white flex items-center justify-center"
+                style="background-color: {{ section.settings.cart_badge_color }}"
+              >
+                {{- cart.item_count -}}
+              </span>
+            {% endif %}
+          </a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -223,3 +335,208 @@
     }
   });
 </script>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "text",
+      "id": "shop_name",
+      "label": "Shop Name",
+      "info": "Customize the shop name displayed in the header when no logo is uploaded"
+    },
+    {
+      "type": "header",
+      "content": "Favicon Settings"
+    },
+    {
+      "type": "image_picker",
+      "id": "favicon",
+      "label": "Favicon",
+      "info": "Upload a favicon for your store. Recommended size: 32x32px or 16x16px"
+    },
+    {
+      "type": "header",
+      "content": "Logo Settings"
+    },
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo Image",
+      "info": "Upload your store logo. Recommended size: 200x32px"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "label": "Logo Width",
+      "min": 50,
+      "max": 300,
+      "step": 10,
+      "default": 200,
+      "unit": "px"
+    },
+    {
+      "type": "text",
+      "id": "logo_alt_text",
+      "label": "Logo Alt Text",
+      "default": "Store Logo",
+      "info": "Alternative text for the logo image"
+    },
+    {
+      "type": "header",
+      "content": "Navigation Settings"
+    },
+    {
+      "type": "link_list",
+      "id": "main_menu",
+      "label": "Main Menu",
+      "default": "main-menu",
+      "info": "Select the menu to display in the header"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show Search Icon",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cart",
+      "label": "Show Cart Icon",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_account_links",
+      "label": "Show Account Links",
+      "default": true,
+      "info": "Show login/logout and account links"
+    },
+    {
+      "type": "header",
+      "content": "Cart Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cart_count",
+      "label": "Show Cart Item Count",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "cart_text",
+      "label": "Cart Text",
+      "default": "Cart"
+    },
+    {
+      "type": "header",
+      "content": "Mobile Menu Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "mobile_menu_sticky",
+      "label": "Sticky Mobile Menu",
+      "default": false,
+      "info": "Make mobile menu stick to top when scrolling"
+    },
+    {
+      "type": "text",
+      "id": "mobile_menu_title",
+      "label": "Mobile Menu Title",
+      "default": "Menu"
+    },
+    {
+      "type": "header",
+      "content": "Styling Settings"
+    },
+    {
+      "type": "color",
+      "id": "header_background",
+      "label": "Header Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "header_text_color",
+      "label": "Header Text Color",
+      "default": "#111827"
+    },
+    {
+      "type": "color",
+      "id": "header_hover_color",
+      "label": "Header Hover Color",
+      "default": "#374151"
+    },
+    {
+      "type": "color",
+      "id": "cart_badge_color",
+      "label": "Cart Badge Color",
+      "default": "#ef4444"
+    },
+    {
+      "type": "select",
+      "id": "header_shadow",
+      "label": "Header Shadow",
+      "options": [
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "sm",
+          "label": "Small"
+        },
+        {
+          "value": "md",
+          "label": "Medium"
+        },
+        {
+          "value": "lg",
+          "label": "Large"
+        }
+      ],
+      "default": "sm"
+    },
+    {
+      "type": "header",
+      "content": "Advanced Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_header",
+      "label": "Enable Sticky Header",
+      "default": false,
+      "info": "Header will stick to top when scrolling"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_transparent_header",
+      "label": "Enable Transparent Header",
+      "default": false,
+      "info": "Make header transparent on homepage"
+    },
+    {
+      "type": "range",
+      "id": "header_height",
+      "label": "Header Height",
+      "min": 60,
+      "max": 120,
+      "step": 5,
+      "default": 80,
+      "unit": "px"
+    },
+    {
+      "type": "text",
+      "id": "custom_css",
+      "label": "Custom CSS",
+      "info": "Add custom CSS for advanced styling"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Header"
+    }
+  ]
+}
+{% endschema %}
