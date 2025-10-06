@@ -1,18 +1,205 @@
-{% paginate collection.products by 2 %}
-  <h1>{{ collection.title }}</h1>
-  {% for product in collection.products %}
-    <div>
-      <a href="{{ product.url | within: collection }}">{{ product.title }}</a>
-      {{ product.price | money }}
-      {% unless product.available %}<br><strong>sold out</strong>{% endunless %}
-      <a href="{{ product.url | within: collection }}">
-        <img src="{{ product.featured_image.src | img_url: 'large' }}" alt="{{ product.featured_image.alt | escape }}">
-      </a>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Collection Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ collection.title }}</h1>
+    {% if collection.description != blank %}
+      <div class="prose prose-lg text-gray-600 max-w-3xl">
+        {{ collection.description }}
+      </div>
+    {% endif %}
+    <p class="text-sm text-gray-500 mt-4">{{ collection.products_count }} products</p>
+  </div>
+
+  <!-- Filters and Sorting -->
+  <div class="mb-8 bg-white border border-gray-200 rounded-lg p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <!-- Product Count -->
+      <div class="text-sm text-gray-700">
+        Showing {{ paginate.current_offset | plus: 1 }}-
+        {{- paginate.current_offset | plus: collection.products.size }}
+        of {{ collection.products_count }} products
+      </div>
+
+      <!-- Sort Options -->
+      <div class="flex items-center space-x-4">
+        <label for="sort-by" class="text-sm font-medium text-gray-700">Sort by:</label>
+        <select
+          id="sort-by"
+          class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="manual">Featured</option>
+          <option value="best-selling">Best Selling</option>
+          <option value="title-ascending">A-Z</option>
+          <option value="title-descending">Z-A</option>
+          <option value="price-ascending">Price: Low to High</option>
+          <option value="price-descending">Price: High to Low</option>
+          <option value="created-ascending">Oldest to Newest</option>
+          <option value="created-descending">Newest to Oldest</option>
+        </select>
+      </div>
     </div>
-  {% else %}
-    <p>no matches</p>
-  {% endfor %}
-  {% if paginate.pages > 1 %}
-    {{ paginate | default_pagination }}
-  {% endif %}
-{% endpaginate %}
+  </div>
+
+  <!-- Products Grid -->
+  {% paginate collection.products by 12 %}
+    {% if collection.products.size > 0 %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+        {% for product in collection.products %}
+          <div class="group relative bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+            <!-- Product Image -->
+            <div class="aspect-w-1 aspect-h-1 w-full overflow-hidden bg-gray-200">
+              <a href="{{ product.url | within: collection }}" class="block">
+                {% if product.featured_image %}
+                  <img
+                    src="{{ product.featured_image | image_url: width: 400 }}"
+                    alt="{{ product.featured_image.alt | escape | default: product.title | escape }}"
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    width="400"
+                    height="400"
+                    loading="lazy"
+                  >
+                {% else %}
+                  <div class="w-full h-full flex items-center justify-center bg-gray-200">
+                    <span class="text-4xl text-gray-400">{{ product.title | first }}</span>
+                  </div>
+                {% endif %}
+              </a>
+
+              <!-- Quick Actions -->
+              <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <a
+                  href="{{ product.url | within: collection }}"
+                  class="bg-white text-gray-900 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors duration-200"
+                >
+                  Quick View
+                </a>
+              </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="p-4">
+              <h3 class="text-sm font-medium text-gray-900 mb-2">
+                <a
+                  href="{{ product.url | within: collection }}"
+                  class="hover:text-blue-600 transition-colors duration-200"
+                >
+                  {{ product.title }}
+                </a>
+              </h3>
+
+              <!-- Price -->
+              <div class="flex items-center space-x-2 mb-2">
+                {% if product.compare_at_price > product.price %}
+                  <span class="text-lg font-semibold text-red-600">{{ product.price | money }}</span>
+                  <span class="text-sm text-gray-500 line-through">{{ product.compare_at_price | money }}</span>
+                  <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Sale</span>
+                {% else %}
+                  <span class="text-lg font-semibold text-gray-900">{{ product.price | money }}</span>
+                {% endif %}
+              </div>
+
+              <!-- Availability -->
+              <div class="flex items-center justify-between">
+                {% if product.available %}
+                  <span class="text-sm text-green-600 font-medium">In Stock</span>
+                {% else %}
+                  <span class="text-sm text-red-600 font-medium">Sold Out</span>
+                {% endif %}
+
+                <!-- Add to Cart Button -->
+                {% if product.available %}
+                  <form action="{{ routes.cart_add_url }}" method="post" enctype="multipart/form-data" class="inline">
+                    <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+                    <button
+                      type="submit"
+                      class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors duration-200"
+                    >
+                      Add to Cart
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+
+              <!-- Variants -->
+              {% if product.variants.size > 1 %}
+                <div class="mt-2">
+                  <span class="text-xs text-gray-500">{{ product.variants.size }} variants</span>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if paginate.pages > 1 %}
+        <div class="flex items-center justify-center space-x-2">
+          {% if paginate.previous %}
+            <a
+              href="{{ paginate.previous.url }}"
+              class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+            >
+              Previous
+            </a>
+          {% endif %}
+
+          {% for part in paginate.parts %}
+            {% if part.is_link %}
+              <a
+                href="{{ part.url }}"
+                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+              >
+                {{ part.title }}
+              </a>
+            {% else %}
+              <span class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-gray-50">
+                {{ part.title }}
+              </span>
+            {% endif %}
+          {% endfor %}
+
+          {% if paginate.next %}
+            <a
+              href="{{ paginate.next.url }}"
+              class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+            >
+              Next
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      <!-- No Products Found -->
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No products found</h3>
+        <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
+        <div class="mt-6">
+          <a
+            href="{{ routes.collections_url }}"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Browse All Collections
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  {% endpaginate %}
+</div>
+
+<script>
+  // Sort functionality
+  document.getElementById('sort-by').addEventListener('change', function () {
+    const sortValue = this.value;
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('sort_by', sortValue);
+    window.location.href = currentUrl.toString();
+  });
+
+  // Set current sort value
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentSort = urlParams.get('sort_by') || 'manual';
+  document.getElementById('sort-by').value = currentSort;
+</script>

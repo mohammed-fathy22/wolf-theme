@@ -1,17 +1,232 @@
-{% paginate collection.products by 2 %}
-  <h1>{{ collection.title }}</h1>
-  {% for product in collection.products %}
-    <div>
-      <a href="{{ product.url | within: collection }}">{{ product.title }}</a>
-      {{ product.price | money }}
-      {% unless product.available %}<br><strong>sold out</strong>{% endunless %}
-      <a href="{{ product.url | within: collection }}">
-        <img src="{{ product.featured_image.src | img_url: 'large' }}" alt="{{ product.featured_image.alt | escape }}">
-      </a>
-    </div>
-  {% else %}
-    <p>no matches</p>
-  {% endfor %}
-  {% if paginate.pages > 1 %}{{ paginate | default_pagination }}{% endif %}
-{% endpaginate %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- Collection Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ collection.title }}</h1>
+    {% if collection.description != blank %}
+      <div class="prose prose-lg text-gray-600 max-w-3xl">
+        {{ collection.description }}
+      </div>
+    {% endif %}
+    <p class="text-sm text-gray-500 mt-4">{{ collection.products_count }} products</p>
+  </div>
 
+  <!-- Filters and Sorting -->
+  <div class="mb-8 bg-white border border-gray-200 rounded-lg p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <!-- Product Count -->
+      <div class="text-sm text-gray-700">
+        Showing {{ paginate.current_offset | plus: 1 }}-
+        {{- paginate.current_offset | plus: collection.products.size }}
+        of {{ collection.products_count }} products
+      </div>
+
+      <!-- Sort Options -->
+      <div class="flex items-center space-x-4">
+        <label for="sort-by" class="text-sm font-medium text-gray-700">Sort by:</label>
+        <select
+          id="sort-by"
+          class="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="manual">Featured</option>
+          <option value="best-selling">Best Selling</option>
+          <option value="title-ascending">A-Z</option>
+          <option value="title-descending">Z-A</option>
+          <option value="price-ascending">Price: Low to High</option>
+          <option value="price-descending">Price: High to Low</option>
+          <option value="created-ascending">Oldest to Newest</option>
+          <option value="created-descending">Newest to Oldest</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products List -->
+  {% paginate collection.products by 12 %}
+    {% if collection.products.size > 0 %}
+      <div class="space-y-4 mb-12">
+        {% for product in collection.products %}
+          <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
+            <div class="flex flex-col sm:flex-row gap-6">
+              <!-- Product Image -->
+              <div class="w-full sm:w-32 h-32 flex-shrink-0">
+                <a href="{{ product.url | within: collection }}" class="block">
+                  {% if product.featured_image %}
+                    <img
+                      src="{{ product.featured_image | image_url: width: 200 }}"
+                      alt="{{ product.featured_image.alt | escape | default: product.title | escape }}"
+                      class="w-full h-full object-cover rounded-lg"
+                      width="200"
+                      height="200"
+                      loading="lazy"
+                    >
+                  {% else %}
+                    <div class="w-full h-full flex items-center justify-center bg-gray-200 rounded-lg">
+                      <span class="text-2xl text-gray-400">{{ product.title | first }}</span>
+                    </div>
+                  {% endif %}
+                </a>
+              </div>
+
+              <!-- Product Details -->
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  <!-- Product Info -->
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                      <a
+                        href="{{ product.url | within: collection }}"
+                        class="hover:text-blue-600 transition-colors duration-200"
+                      >
+                        {{ product.title }}
+                      </a>
+                    </h3>
+
+                    <!-- Product Description -->
+                    {% if product.description != blank %}
+                      <p class="text-sm text-gray-600 mb-3 line-clamp-2">
+                        {{ product.description | strip_html | truncate: 150 }}
+                      </p>
+                    {% endif %}
+
+                    <!-- Price -->
+                    <div class="flex items-center space-x-3 mb-3">
+                      {% if product.compare_at_price > product.price %}
+                        <span class="text-xl font-bold text-red-600">{{ product.price | money }}</span>
+                        <span class="text-sm text-gray-500 line-through">{{ product.compare_at_price | money }}</span>
+                        <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Sale</span>
+                      {% else %}
+                        <span class="text-xl font-bold text-gray-900">{{ product.price | money }}</span>
+                      {% endif %}
+                    </div>
+
+                    <!-- Availability and Variants -->
+                    <div class="flex items-center space-x-4 text-sm">
+                      {% if product.available %}
+                        <span class="text-green-600 font-medium">In Stock</span>
+                      {% else %}
+                        <span class="text-red-600 font-medium">Sold Out</span>
+                      {% endif %}
+
+                      {% if product.variants.size > 1 %}
+                        <span class="text-gray-500">{{ product.variants.size }} variants available</span>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <!-- Actions -->
+                  <div class="flex flex-col sm:items-end space-y-3">
+                    <!-- Add to Cart -->
+                    {% if product.available %}
+                      <form
+                        action="{{ routes.cart_add_url }}"
+                        method="post"
+                        enctype="multipart/form-data"
+                        class="w-full sm:w-auto"
+                      >
+                        <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+                        <button
+                          type="submit"
+                          class="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors duration-200"
+                        >
+                          Add to Cart
+                        </button>
+                      </form>
+                    {% endif %}
+
+                    <!-- Quick Actions -->
+                    <div class="flex space-x-2">
+                      <a
+                        href="{{ product.url | within: collection }}"
+                        class="text-sm text-gray-600 hover:text-blue-600 transition-colors duration-200"
+                      >
+                        View Details
+                      </a>
+
+                      <!-- Wishlist Button (if implemented) -->
+                      <button
+                        class="text-sm text-gray-600 hover:text-red-600 transition-colors duration-200"
+                        onclick="alert('Wishlist feature coming soon!')"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if paginate.pages > 1 %}
+        <div class="flex items-center justify-center space-x-2">
+          {% if paginate.previous %}
+            <a
+              href="{{ paginate.previous.url }}"
+              class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+            >
+              Previous
+            </a>
+          {% endif %}
+
+          {% for part in paginate.parts %}
+            {% if part.is_link %}
+              <a
+                href="{{ part.url }}"
+                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+              >
+                {{ part.title }}
+              </a>
+            {% else %}
+              <span class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-500 bg-gray-50">
+                {{ part.title }}
+              </span>
+            {% endif %}
+          {% endfor %}
+
+          {% if paginate.next %}
+            <a
+              href="{{ paginate.next.url }}"
+              class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200"
+            >
+              Next
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% else %}
+      <!-- No Products Found -->
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No products found</h3>
+        <p class="mt-1 text-sm text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
+        <div class="mt-6">
+          <a
+            href="{{ routes.collections_url }}"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Browse All Collections
+          </a>
+        </div>
+      </div>
+    {% endif %}
+  {% endpaginate %}
+</div>
+
+<script>
+  // Sort functionality
+  document.getElementById('sort-by').addEventListener('change', function () {
+    const sortValue = this.value;
+    const currentUrl = new URL(window.location);
+    currentUrl.searchParams.set('sort_by', sortValue);
+    window.location.href = currentUrl.toString();
+  });
+
+  // Set current sort value
+  const urlParams = new URLSearchParams(window.location.search);
+  const currentSort = urlParams.get('sort_by') || 'manual';
+  document.getElementById('sort-by').value = currentSort;
+</script>
